@@ -1,0 +1,22 @@
+.pyc
+*.swp
+*~
+slurm-*
+.nfs*
+toRsync*
+fromRsync*
+results/*
+# !results/exampleMouse
+# !results/exampleMouse/.gitkeep
+data/*
+# !data/exampleMouse
+# !data/exampleMouse/*.ini
+log/*
+# !log/exampleMouse
+# !log/exampleMouse/.gitkeep
+figures/*
+# !figures/exampleMouse
+# !figures/exampleMouse/.gitkeep
+slurmOutputs/*
+# !slurmOutputs/exampleMouse
+# !slurmOutputs/exampleMouse/.gitkeep
