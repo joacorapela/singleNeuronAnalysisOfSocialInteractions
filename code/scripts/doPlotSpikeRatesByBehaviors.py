@@ -1,43 +1,55 @@
 
 import sys
-import glob
+import pdb
 import argparse
 import numpy as np
+import plotly.graph_objects as go
 
 def main(argv):
     parser = argparse.ArgumentParser()
-    parser.add_argument("--spikesFilenamesPattern", help="spikes filename pattern", default="../../../data/120120/Neurons_BLA/*[A-Z].npy")
-    parser.add_argument("--behavioralLabels", help="behavioral labels to include", default='["nonsocial", "approach", "following", "headhead", "headtail", "conspecific", "rice1", "rice2"]')
-    parser.add_argument("--spikesRatesFigFilenamePattern", help="spikes rates figure filename pattern", default="../figures/spikesRates{:s}.{:s}")
-    parser.add_argument("--sRate", help="sample rate", type=float, default=1e3)
-    parser.add_argument("--binSizeSecs", help="bin size (sec)", type=float, default=0.05)
+    parser.add_argument("--spike_rates_by_behaviors_filename",
+                        help="filename containing the spikes rates by behavior",
+                        default="../../results/spikesRatesByBehaviors.npz")
+    parser.add_argument("--spike_rates_fig_filename_pattern",
+                        help="spikes rates figure filename pattern",
+                        default="../../figures/spikesRatesByBehaviors{:s}.{:s}")
     args = parser.parse_args()
 
-    spikesFilenamesPattern = args.spikesFilenamesPattern
-    spikesRatesFigFilenamePattern = args.spikesRatesFigFilenamePattern
-    behavioralLabels = ast.literal_eval(args.behavioralLabels)
-    sRate = float(args.sRate)
-    binSizeSecs = float(args.binSizeSecs)
+    spike_rates_by_behaviors_filename = args.spike_rates_by_behaviors_filename
+    fig_filename_pattern = args.spike_rates_fig_filename_pattern
 
-    spikesFilenames = glob.glob(spikesFilenamesPattern)
-    nNeurons = len(spikesFilenames)
-    filesNumbers = np.zeros(nNeurons)
-    filesLetters = [None]*nNeurons
-    spikeRates = np.zeros(nNeurons)
-    neuronsLabels = np.empty(nNeurons, dtype=object)
-    recordingLength = 0
+    load_res = np.load(file=spike_rates_by_behaviors_filename)
+    spike_rates_by_behaviors = load_res["spike_rates_by_behaviors"]
+    neurons_labels = load_res["neurons_labels"]
+    behaviors_labels = load_res["behaviors_labels"]
 
-    boutSamplesByBehavior = utils.getBoutSamplesByBehavior(behavioralLabels=behavioralLabels, boutSamplesFilenames)
+    mean_spike_rastes_across_behaviors = np.mean(spike_rates_by_behaviors,
+                                                 axis=1)
+    # to allow broadcasting
+    mean_spike_rastes_across_behaviors = \
+            np.expand_dims(a=mean_spike_rastes_across_behaviors, axis=1)
+    normalized_spike_rates_by_behaviors = \
+            spike_rates_by_behaviors/mean_spike_rastes_across_behaviors
 
-    for i, spikesFilename in enumerate(spikesFilenames):
-        neuronsLabels[i] = os.path.splitext(os.path.basename(spikesFilename))[0]
-        filesNumbers[i] = int(neuronsLabels[i][:-1])
-        filesLetters[i] = neuronsLabels[i][-1]
-        spikesSamples = np.load(spikesFilename)*sRate
-        ISIs = np.diff(spikesTimes[:,0])/sRate
-        counts, _ = np.histogram(ISIs, ISIsHistBins)
-        ISIsHists[i,:] = counts/len(ISIs)
-        recordingLength = max(recordingLength, spikesTimes[-1])
-        spikeRates[i] = len(spikesTimes)
-if __name__=="__main__":
+    fig = go.Figure()
+    trace = go.Heatmap(z=spike_rates_by_behaviors,
+                       x=behaviors_labels,
+                       y=neurons_labels)
+    fig.add_trace(trace)
+    fig.write_image(fig_filename_pattern.format("Unnormalized", "png"))
+    fig.write_html(fig_filename_pattern.format("Unnormalized", "html"))
+    fig.show()
+
+    fig = go.Figure()
+    trace = go.Heatmap(z=normalized_spike_rates_by_behaviors,
+                       x=behaviors_labels,
+                       y=neurons_labels)
+    fig.add_trace(trace)
+    fig.write_image(fig_filename_pattern.format("Normalized", "png"))
+    fig.write_html(fig_filename_pattern.format("Normalized", "html"))
+    fig.show()
+
+    pdb.set_trace()
+
+if __name__ == "__main__":
     main(sys.argv)
