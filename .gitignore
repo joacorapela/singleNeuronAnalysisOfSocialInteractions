@@ -20,3 +20,5 @@ figures/*
 slurmOutputs/*
 # !slurmOutputs/exampleMouse
 # !slurmOutputs/exampleMouse/.gitkeep
+code/src/__pycache__/*
+syncFigs.csh

@@ -1,10 +1,60 @@
+
 import pdb
+import os
+import glob
 import numpy as np
 
-def get_bout_times_by_behavior(behaviors_labels,
-                                  bouts_times_filenames):
+def get_all_neurons_labels(spikes_times_filenames_dir):
+    spikes_times_filenames_pattern = "{:s}/*.npy".format(spikes_times_filenames_dir)
+    spikes_times_filenames = glob.glob(spikes_times_filenames_pattern)
+    neurons_labels = [os.path.basename(spikes_times_filename)[:-4] for spikes_times_filename in spikes_times_filenames]
+    return neurons_labels
+
+def get_spike_times_in_interactions(spikes_times, interactions_nros, interactions_start_times, interactions_stop_times):
+    spike_times = [None]*len(interactions_nros)
+    for i, interaction in enumerate(interactions_nros):
+        interaction_start_time = interactions_start_times[interaction]*1e3
+        interaction_stop_time = interactions_stop_times[interaction]*1e3
+        interaction_spike_times = spikes_times[np.logical_and(interaction_start_time<=spikes_times[:,0], spikes_times[:,0]<=interaction_stop_time), 0]
+        spike_times[i] = interaction_spike_times
+    return spike_times
+
+def get_ISIs_for_behaviors_in_interactions(spikes_times, behaviors_labels, interactions, bouttimes_filenames_pattern_pattern):
+    ISIs_by_by_behavior = get_ISIs_by_behavior_in_interactions(spikes_times=spikes_times, behaviors_labels=behaviors_labels, interactions=interactions, bouttimes_filenames_pattern_pattern=bouttimes_filenames_pattern_pattern)
+    ISIs = None
+    for behavior_label in ISIs_by_by_behavior:
+        if ISIs is None:
+            ISIs = ISIs_by_by_behavior[behavior_label]
+        else:
+            ISIs = np.append(ISIs, ISIs_by_by_behavior[behavior_label])
+    return ISIs
+
+def get_ISIs_by_behavior_in_interactions(spikes_times, behaviors_labels, interactions, bouttimes_filenames_pattern_pattern):
+    ISIs = {}
+    for interaction in interactions:
+        bouttimes_filenames_pattern = bouttimes_filenames_pattern_pattern.format(interaction)
+        bouttimes_filenames = glob.glob(bouttimes_filenames_pattern)
+        assert(len(bouttimes_filenames)==1)
+        bouttimes_filename = bouttimes_filenames[0]
+        bouttimes_dict = np.load(bouttimes_filename)
+        for behavior_label in behaviors_labels:
+            if behavior_label in bouttimes_dict.keys():
+                bouttimes = bouttimes_dict[behavior_label]*1000 # bouttimes stored in secs but I need them in msec
+                for i in range(bouttimes.shape[0]):
+                    bout_spikes_times = spikes_times[np.logical_and(bouttimes[i,0]<=spikes_times[:,0], spikes_times[:,0]<bouttimes[i,1]),0]
+                    if(len(bout_spikes_times)>1):
+                        bout_ISIs = bout_spikes_times.diff()
+                        bout_ISIs[np.where(bout_ISIs==0)[0]] = 1.0 # fixing problem due to storing spike times in millisecondsA
+                        if behavior_label in ISIs.keys():
+                            ISIs[behavior_label] = np.append(ISIs[behavior_label], bout_ISIs)
+                        else:
+                            ISIs[behavior_label] = bout_ISIs
+    return(ISIs)
+
+def get_bout_times_by_behavior(behaviors_labels, bouts_times_filenames):
     bout_times_by_behavior = dict(zip(behaviors_labels, [None]*len(behaviors_labels)))
 
+>>>>>>> 71f7f90f0da96af3ef8f48dc4d60c28e87a79c80
     for bouts_times_filename in bouts_times_filenames:
         bouts_times_dict = np.load(bouts_times_filename)
         behaviors_labels_to_include = behaviors_labels & set(bouts_times_dict.keys())
@@ -56,6 +106,6 @@ def get_nro_spikes_by_behavior(spike_times_by_behavior_and_bout):
 def get_spike_rate_by_behavior(nro_spikes_by_behavior, total_time_by_behavior, ordered_behaviors_labels):
     spike_rates = np.empty(len(ordered_behaviors_labels))
     for i, behavioral_label in enumerate(ordered_behaviors_labels):
-        # division by 1e3 becausetotal_time_by_behavior in msec
+        # division by 1e3 because total_time_by_behavior in msec
         spike_rates[i] = nro_spikes_by_behavior[behavioral_label]/(total_time_by_behavior[behavioral_label]/1e3)
     return spike_rates

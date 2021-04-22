@@ -17,10 +17,10 @@ def main(argv):
                         default='["nonsocial", "approach", "following", "headhead", "headtail", "conspecific", "rice1", "rice2"]')
     parser.add_argument("--bouts_times_filenames_pattern",
                         help="bout times filename pattern",
-                        default="../../../../../data/120120/Behavior/*_int*_bouttimes.npz")
+                        default="../../../../data/120120/Behavior/*_int*_bouttimes.npz")
     parser.add_argument("--spikes_filenames_pattern",
                         help="spikes filename pattern",
-                        default="../../../../../data/120120/Neurons_BLA/*[A-Z].npy")
+                        default="../../../../data/120120/Neurons_BLA/*[A-Z].npy")
     parser.add_argument("--save_filename",
                         help="filename to save the spikes rates by behavior",
                         default="../../results/spikesRatesByBehaviors.npz")
