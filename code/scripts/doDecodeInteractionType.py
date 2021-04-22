@@ -36,7 +36,7 @@ def main(argv):
                         help="interaction to plot",
                         default="[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]")
     parser.add_argument("--params_filename",
-                        help="spikes filename pattern",
+                        help="parameters filename",
                         default="../../../../data/120120/Parameters_13042019.yml")
     parser.add_argument("--percentage_train",
                         help="percentage of ISIs for training",
