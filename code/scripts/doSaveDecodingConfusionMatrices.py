@@ -60,13 +60,6 @@ def main(argv):
     else:
         raise ValueError("Invalid likelihood_model={:s}".format(likelihood_model))
 
-    if likelihood_model=="exponential":
-        model_class = probabilisticModels.Exponential
-    elif likelihood_model=="inverse_Gaussian":
-        model_class = probabilisticModels.InverseGaussian
-    else:
-        raise ValueError("Invalid likelihood_model={:s}".format(likelihood_model))
-
     nBehaviors = len(behaviors_labels)
     confusion_matrix = np.zeros((nBehaviors, nBehaviors))
     classifier = classifiers.NaiveBayes()
