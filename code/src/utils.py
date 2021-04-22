@@ -1,6 +1,23 @@
+
 import pdb
+import os
 import glob
 import numpy as np
+
+def get_all_neurons_labels(spikes_times_filenames_dir):
+    spikes_times_filenames_pattern = "{:s}/*.npy".format(spikes_times_filenames_dir)
+    spikes_times_filenames = glob.glob(spikes_times_filenames_pattern)
+    neurons_labels = [os.path.basename(spikes_times_filename)[:-4] for spikes_times_filename in spikes_times_filenames]
+    return neurons_labels
+
+def get_spike_times_in_interactions(spikes_times, interactions_nros, interactions_start_times, interactions_stop_times):
+    spike_times = [None]*len(interactions_nros)
+    for i, interaction in enumerate(interactions_nros):
+        interaction_start_time = interactions_start_times[interaction]*1e3
+        interaction_stop_time = interactions_stop_times[interaction]*1e3
+        interaction_spike_times = spikes_times[np.logical_and(interaction_start_time<=spikes_times[:,0], spikes_times[:,0]<=interaction_stop_time), 0]
+        spike_times[i] = interaction_spike_times
+    return spike_times
 
 def get_ISIs_for_behaviors_in_interactions(spikes_times, behaviors_labels, interactions, bouttimes_filenames_pattern_pattern):
     ISIs_by_by_behavior = get_ISIs_by_behavior_in_interactions(spikes_times=spikes_times, behaviors_labels=behaviors_labels, interactions=interactions, bouttimes_filenames_pattern_pattern=bouttimes_filenames_pattern_pattern)
@@ -26,7 +43,7 @@ def get_ISIs_by_behavior_in_interactions(spikes_times, behaviors_labels, interac
                 for i in range(bouttimes.shape[0]):
                     bout_spikes_times = spikes_times[np.logical_and(bouttimes[i,0]<=spikes_times[:,0], spikes_times[:,0]<bouttimes[i,1]),0]
                     if(len(bout_spikes_times)>1):
-                        bout_ISIs = bout_spikes_times[1:]-bout_spikes_times[:-1]
+                        bout_ISIs = bout_spikes_times.diff()
                         bout_ISIs[np.where(bout_ISIs==0)[0]] = 1.0 # fixing problem due to storing spike times in millisecondsA
                         if behavior_label in ISIs.keys():
                             ISIs[behavior_label] = np.append(ISIs[behavior_label], bout_ISIs)
